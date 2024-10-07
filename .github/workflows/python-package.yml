@@ -1,0 +1,75 @@
+name: Python package
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [ 3.7.17, 3.8.18, 3.9.18, 3.10.15, 3.11.10, 3.12.6 ]
+
+    steps:
+      - name: Clear cache  # Optional step to ensure no old Python versions
+        run: |
+          rm -rf ~/.cache/pip
+          sudo rm -rf /opt/hostedtoolcache/Python/*
+
+      - name: Checkout code
+        uses: actions/checkout@v3  # Use the latest version
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5  # Use the latest version
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt   # Install development dependencies
+
+      - name: Lint with Ruff
+        run: |
+          ruff check simatic_s7_webserver_api  
+
+      # - name: Test with pytest
+      #   run: |
+      #     pytest
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.6  # Use a specific version for publishing
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: |
+          python -m build
+
+      # - name: Publish to PyPI
+      #   env:
+      #     TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}  #For github repository, not the same for GITLAB/Code.Siemens repository
+      #     TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      #   run: |
+      #     python -m twine upload dist/*

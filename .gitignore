@@ -1,0 +1,16 @@
+**/__pycache__
+**/*.inv
+**/*.js
+**/*.html
+**/*.htm
+**/*.doctree
+**/*.pickle
+**/*.css
+**/*.txt
+.vscode/
+.venv/
+
+!requirements.txt
+!requirements-dev.txt
+RepolinterResults.md
+docs/modules.md
